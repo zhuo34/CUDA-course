@@ -25,7 +25,7 @@ struct CPUBitmap {
     void    *dataBlock;
     void (*bitmapExit)(void*);
 
-    CPUBitmap( int width, int height, void *d = nullptr ) {
+    CPUBitmap( int width, int height, void *d = NULL ) {
         pixels = new unsigned char[width * height * 4];
         x = width;
         y = height;
@@ -36,10 +36,10 @@ struct CPUBitmap {
         delete [] pixels;
     }
 
-    unsigned char* get_bitmap() const   { return pixels; }
-    long image_size() const { return x * y * 4; }
+    unsigned char* get_ptr( void ) const   { return pixels; }
+    long image_size( void ) const { return x * y * 4; }
 
-    void display_and_exit( void(*e)(void*) = nullptr ) {
+    void display_and_exit( void(*e)(void*) = NULL ) {
         CPUBitmap**   bitmap = get_bitmap_ptr();
         *bitmap = this;
         bitmapExit = e;
@@ -53,38 +53,34 @@ struct CPUBitmap {
         glutCreateWindow( "bitmap" );
         glutKeyboardFunc(Key);
         glutDisplayFunc(Draw);
-//        glutIdleFunc(Draw);
         glutMainLoop();
     }
 
-     // static method used for glut callbacks
-    static CPUBitmap** get_bitmap_ptr() {
+    // static method used for glut callbacks
+    static CPUBitmap** get_bitmap_ptr( void ) {
         static CPUBitmap   *gBitmap;
         return &gBitmap;
     }
 
-   // static method used for glut callbacks
+    // static method used for glut callbacks
     static void Key(unsigned char key, int x, int y) {
         switch (key) {
             case 27:
                 CPUBitmap*   bitmap = *(get_bitmap_ptr());
-                if (bitmap->dataBlock != nullptr && bitmap->bitmapExit != nullptr)
+                if (bitmap->dataBlock != NULL && bitmap->bitmapExit != NULL)
                     bitmap->bitmapExit( bitmap->dataBlock );
                 exit(0);
         }
     }
 
     // static method used for glut callbacks
-    static void Draw() {
-        printf("Draw\n");
+    static void Draw( void ) {
         CPUBitmap*   bitmap = *(get_bitmap_ptr());
         glClearColor( 0.0, 0.0, 0.0, 1.0 );
         glClear( GL_COLOR_BUFFER_BIT );
         glDrawPixels( bitmap->x, bitmap->y, GL_RGBA, GL_UNSIGNED_BYTE, bitmap->pixels );
         glFlush();
     }
-
-
 };
 
 #endif  // __CPU_BITMAP_H__

@@ -101,12 +101,10 @@ cuComplex second_circle(float theta) {
  * @param datablock
  * @param tick
  */
-void render(uchar4* devPtr, void *datablock, int tick) {
+void render(uchar4* devPtr, void *datablock, int tick, float state) {
     dim3    grid(DIM, DIM);
-    // calculate animation frame index
-    float t = (float)tick/1000;
     // fetch a point from main cardioid in Mandelbrod Set
-    auto c = main_cardioid(t * 2 * PI);
+    auto c = main_cardioid(state * 2 * PI);
     JuliaSetColor color(0.3, 0.87, 0.9);
     kernel<<<grid,1>>>((unsigned char *)devPtr, c, color);
 }

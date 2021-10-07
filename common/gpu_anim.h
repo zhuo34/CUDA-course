@@ -30,17 +30,24 @@ PFNGLGENBUFFERSARBPROC    glGenBuffers     = nullptr;
 PFNGLBUFFERDATAARBPROC    glBufferData     = nullptr;
 
 
-struct GPUAnimBitmap {
+class GPUAnimBitmap {
+private:
     GLuint  bufferObj;
     cudaGraphicsResource *resource;
     int     width, height;
     void    *dataBlock;
-    void (*fAnim)(uchar4*,void*,int);
+    void (*fAnim)(uchar4*,void*,int,float);
     void (*animExit)(void*);
     void (*clickDrag)(void*,int,int,int,int);
     int     dragStartX, dragStartY;
-    bool tick_add = false;
+    int tick;
+    bool state_tick;
+    float state;
+    float speed;
+    static GPUAnimBitmap *gBitmap;
+    static const float max_speed;
 
+public:
     GPUAnimBitmap(int w, int h, const std::string &windowName = "Untitled") {
         width = w;
         height = h;
@@ -78,29 +85,11 @@ struct GPUAnimBitmap {
         HANDLE_ERROR( cudaGraphicsGLRegisterBuffer( &resource, bufferObj, cudaGraphicsMapFlagsNone ) );
     }
 
-    ~GPUAnimBitmap() {
-        free_resources();
-    }
-
-    void free_resources() {
-        HANDLE_ERROR( cudaGraphicsUnregisterResource( resource ) );
-
-        glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
-        glDeleteBuffers( 1, &bufferObj );
-    }
-
-
-    long image_size() const { return width * height * 4; }
-
-    void click_drag( void (*f)(void*,int,int,int,int)) {
-        clickDrag = f;
-    }
-
-    void anim_and_exit( void (*f)(uchar4*,void*,int), void(*e)(void*) = nullptr) {
-        GPUAnimBitmap**   bitmap = get_bitmap_ptr();
-        *bitmap = this;
+    void anim_and_exit( void (*f)(uchar4*,void*,int,float), void(*e)(void*) = nullptr) {
+        gBitmap = this;
         fAnim = f;
         animExit = e;
+        init_state();
 
         glutKeyboardFunc( Key );
         glutDisplayFunc( Draw );
@@ -109,21 +98,45 @@ struct GPUAnimBitmap {
         glutMainLoop();
     }
 
+    ~GPUAnimBitmap() {
+        free_resources();
+    }
+
+    long image_size() const { return width * height * 4; }
+
+private:
+    void free_resources() {
+        HANDLE_ERROR( cudaGraphicsUnregisterResource( resource ) );
+
+        glBindBuffer( GL_PIXEL_UNPACK_BUFFER_ARB, 0 );
+        glDeleteBuffers( 1, &bufferObj );
+    }
+
+    void init_state() {
+        tick = 0;
+        state = 0;
+        state_tick = false;
+        speed = 0.001;
+    }
+
+//    void click_drag( void (*f)(void*,int,int,int,int)) {
+//        clickDrag = f;
+//    }
+
     // static method used for glut callbacks
-    static GPUAnimBitmap** get_bitmap_ptr() {
-        static GPUAnimBitmap*   gBitmap;
-        return &gBitmap;
+    static GPUAnimBitmap *get_bitmap_ptr() {
+        return gBitmap;
     }
 
     // static method used for glut callbacks
     static void mouse_func( int button, int state,
                             int mx, int my ) {
         if (button == GLUT_LEFT_BUTTON) {
-            GPUAnimBitmap*   bitmap = *(get_bitmap_ptr());
+            GPUAnimBitmap*   bitmap = get_bitmap_ptr();
             if (state == GLUT_DOWN) {
                 bitmap->dragStartX = mx;
                 bitmap->dragStartY = my;
-                bitmap->tick_add = !bitmap->tick_add;
+                bitmap->state_tick = !bitmap->state_tick;
             } else if (state == GLUT_UP) {
                 if (bitmap->clickDrag != nullptr)
                     bitmap->clickDrag( bitmap->dataBlock,
@@ -136,17 +149,19 @@ struct GPUAnimBitmap {
 
     // static method used for glut callbacks
     static void idle_func() {
-        static int ticks = 0;
-        GPUAnimBitmap*  bitmap = *(get_bitmap_ptr());
+//        static int ticks = 0;
+        GPUAnimBitmap*  bitmap = get_bitmap_ptr();
         uchar4*         devPtr;
         size_t  size;
 
         HANDLE_ERROR( cudaGraphicsMapResources( 1, &(bitmap->resource), nullptr ) );
         HANDLE_ERROR( cudaGraphicsResourceGetMappedPointer( (void**)&devPtr, &size, bitmap->resource) );
 
-        bitmap->fAnim( devPtr, bitmap->dataBlock, ticks );
-        if (bitmap->tick_add)
-            ticks++;
+        bitmap->fAnim( devPtr, bitmap->dataBlock, bitmap->tick++, bitmap->state );
+        if (bitmap->state_tick) {
+            bitmap->state += bitmap->speed;
+            if (bitmap->state >= 1) bitmap->state = 0;
+        }
         HANDLE_ERROR( cudaGraphicsUnmapResources( 1, &(bitmap->resource), nullptr ) );
 
         glutPostRedisplay();
@@ -156,7 +171,7 @@ struct GPUAnimBitmap {
     static void Key(unsigned char key, int x, int y) {
         switch (key) {
             case 27:
-                GPUAnimBitmap*   bitmap = *(get_bitmap_ptr());
+                GPUAnimBitmap*   bitmap = get_bitmap_ptr();
                 if (bitmap->animExit)
                     bitmap->animExit( bitmap->dataBlock );
                 bitmap->free_resources();
@@ -165,8 +180,8 @@ struct GPUAnimBitmap {
     }
 
     // static method used for glut callbacks
-    static void Draw( void ) {
-        GPUAnimBitmap*   bitmap = *(get_bitmap_ptr());
+    static void Draw() {
+        GPUAnimBitmap *bitmap = get_bitmap_ptr();
         glClearColor( 0.0, 0.0, 0.0, 1.0 );
         glClear( GL_COLOR_BUFFER_BIT );
         glDrawPixels( bitmap->width, bitmap->height, GL_RGBA,
@@ -175,6 +190,8 @@ struct GPUAnimBitmap {
     }
 };
 
+GPUAnimBitmap *GPUAnimBitmap::gBitmap = nullptr;
+const float GPUAnimBitmap::max_speed = 0.1f;
 
 #endif  // __GPU_ANIM_H__
 
