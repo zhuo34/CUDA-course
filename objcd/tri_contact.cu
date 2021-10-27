@@ -1,47 +1,12 @@
 ﻿#include "tri_contact.h"
 
-
-inline int project3(const vec3f &ax, const vec3f &p1, const vec3f &p2, const vec3f &p3) {
-    double P1 = ax.dot(p1);
-    double P2 = ax.dot(p2);
-    double P3 = ax.dot(p3);
-
-    double mx1 = fmax(P1, P2, P3);
-    double mn1 = fmin(P1, P2, P3);
-
-    if (mn1 > 0) return 0;
-    if (0 > mx1) return 0;
-    return 1;
-}
-
-inline int project6(vec3f &ax,
-    vec3f &p1, vec3f &p2, vec3f &p3,
-    vec3f &q1, vec3f &q2, vec3f &q3) {
-    double P1 = ax.dot(p1);
-    double P2 = ax.dot(p2);
-    double P3 = ax.dot(p3);
-    double Q1 = ax.dot(q1);
-    double Q2 = ax.dot(q2);
-    double Q3 = ax.dot(q3);
-
-    double mx1 = fmax(P1, P2, P3);
-    double mn1 = fmin(P1, P2, P3);
-    double mx2 = fmax(Q1, Q2, Q3);
-    double mn2 = fmin(Q1, Q2, Q3);
-
-    if (mn1 > mx2) return 0;
-    if (mn2 > mx1) return 0;
-    return 1;
-}
-
-bool
-Triangle::contact(const Triangle &t) {
+bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3) {
     vec3f p1;
-    vec3f p2 = b - a;
-    vec3f p3 = c - a;
-    vec3f q1 = t.a - a;
-    vec3f q2 = t.b - a;
-    vec3f q3 = t.c - a;
+    vec3f p2 = P2 - P1;
+    vec3f p3 = P3 - P1;
+    vec3f q1 = Q1 - P1;
+    vec3f q2 = Q2 - P1;
+    vec3f q3 = Q3 - P1;
 
     vec3f e1 = p2 - p1;
     vec3f e2 = p3 - p2;

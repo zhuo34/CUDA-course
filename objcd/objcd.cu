@@ -16,18 +16,28 @@
 
 #include "tri_contact.h"
 #include "objviewer.h"
+#include "timer.h"
 #include <iostream>
 
 int main(int argc, char const *argv[]) {
-    // if (argc == 2) {
-
-    // }
-    std::string path = "D:/Projects/CUDA-course/objcd/flag-2000-changed/0000_00.obj";
+    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-no-cd\0108_00.obj)";
+//    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-2000-changed\0000_00.obj)";
     std::cout << "Loading object ..." << std::endl;
+    Timer t;
+    t.start();
     auto obj = MyObj::load(path);
-    std::cout << "Load done with " << obj.nFace() << " face(s)" << std::endl;
+    t.stop();
+    std::cout << "Load done with "
+        << obj.nFace() << " face(s) "
+        << obj.nVertex() << " vertex(s) "
+        << t.now() << " s"
+        << std::endl;
+    t.reset();
+    t.start();
     auto pairs = obj.selfContactDetection();
-    std::cout << pairs.size() << " contact(s) detected." << std::endl;
+    t.stop();
+    std::cout << pairs.size() << " contact(s) detected "
+        << t.now() << " s" << std::endl;
     for (auto &p : pairs) {
         std::cout << "\tContact detected at: (" << p.first
             << ", " << p.second << ")." << std::endl;
