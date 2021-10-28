@@ -2,30 +2,34 @@
 
 #include "cuda.h"
 
-#include <cmath>
 #include <ostream>
 
-#define     GLH_ZERO                double(0.0)
-#define     GLH_EPSILON          double(10e-6)
-#define		GLH_EPSILON_2		double(10e-12)
+#define     GLH_ZERO                float(0.0)
+#define     GLH_EPSILON          float(10e-6)
+#define		GLH_EPSILON_2		float(10e-12)
 #define     equivalent(a,b)             (((a < b + GLH_EPSILON) &&\
                                                       (a > b - GLH_EPSILON)) ? true : false)
-inline double lerp(double a, double b, float t)
+
+__device__ __host__ inline float lerp(float a, float b, float t)
 {
     return a + t * (b - a);
 }
 
-inline double fmax(double a, double b) {
+__device__ __host__ inline float myfmax(float a, float b) {
     return (a > b) ? a : b;
 }
 
-inline double fmin(double a, double b) {
+__device__ __host__ inline float myfmin(float a, float b) {
     return (a < b) ? a : b;
 }
 
-inline bool isEqual(double a, double b, double tol = GLH_EPSILON)
+__device__ __host__ inline float myfabs(float a) {
+    return (a < 0) ? (-a) : a;
+}
+
+__device__ __host__ inline bool isEqual(float a, float b, float tol = GLH_EPSILON)
 {
-    return fabs(a - b) < tol;
+    return myfabs(a - b) < tol;
 }
 
 #ifndef M_PI
@@ -38,158 +42,167 @@ class vec3f {
 public:
     union {
         struct {
-            double x, y, z;
+            float x, y, z;
         };
         struct {
-            double v[3];
+            float v[3];
         };
     };
 
-    inline vec3f()
+    __device__ __host__ inline vec3f()
     {
         x = 0; y = 0; z = 0;
     }
 
-    inline vec3f(const vec3f &v)
+    __device__ __host__ inline vec3f(const vec3f &v)
     {
         x = v.x;
         y = v.y;
         z = v.z;
     }
 
-    inline vec3f(const double *v)
+    __device__ __host__ inline vec3f(const float *v)
     {
         x = v[0];
         y = v[1];
         z = v[2];
     }
 
-    inline vec3f(double x, double y, double z)
+    __device__ __host__ inline vec3f(float x, float y, float z)
     {
         this->x = x;
         this->y = y;
         this->z = z;
     }
 
-    inline double operator [] (int i) const { return v[i]; }
-    inline double &operator [] (int i) { return v[i]; }
+    __device__ __host__ inline float operator [] (int i) const { return v[i]; }
+    __device__ __host__ inline float &operator [] (int i) { return v[i]; }
 
-    inline vec3f &operator += (const vec3f &v) {
+    __device__ __host__ inline vec3f &operator += (const vec3f &v) {
         x += v.x;
         y += v.y;
         z += v.z;
         return *this;
     }
 
-    inline vec3f &operator -= (const vec3f &v) {
+    __device__ __host__ inline vec3f &operator -= (const vec3f &v) {
         x -= v.x;
         y -= v.y;
         z -= v.z;
         return *this;
     }
 
-    inline vec3f &operator *= (double t) {
+    __device__ __host__ inline vec3f &operator *= (float t) {
         x *= t;
         y *= t;
         z *= t;
         return *this;
     }
 
-    inline vec3f &operator /= (double t) {
+    __device__ __host__ inline vec3f &operator /= (float t) {
         x /= t;
         y /= t;
         z /= t;
         return *this;
     }
 
-    inline void negate() {
+    __device__ __host__ inline void negate() {
         x = -x;
         y = -y;
         z = -z;
     }
 
-    inline vec3f operator - () const {
+    __device__ __host__ inline vec3f operator - () const {
         return vec3f(-x, -y, -z);
     }
 
-    inline vec3f operator+ (const vec3f &v) const
+    __device__ __host__ inline vec3f oppsite () const {
+        return vec3f(-x, -y, -z);
+    }
+
+    __device__ __host__ inline vec3f operator+ (const vec3f &v) const
     {
         return vec3f(x + v.x, y + v.y, z + v.z);
     }
 
-    inline vec3f operator- (const vec3f &v) const
+    __device__ __host__ inline vec3f operator- (const vec3f &v) const
     {
         return vec3f(x - v.x, y - v.y, z - v.z);
     }
 
-    inline vec3f operator *(double t) const
+    __device__ __host__ inline vec3f minus (const vec3f &v) const
+    {
+        return vec3f(x - v.x, y - v.y, z - v.z);
+    }
+
+    __device__ __host__ inline vec3f operator *(float t) const
     {
         return vec3f(x*t, y*t, z*t);
     }
 
-    inline vec3f operator /(double t) const
+    __device__ __host__ inline vec3f operator /(float t) const
     {
         return vec3f(x / t, y / t, z / t);
     }
 
     // cross product
-    inline const vec3f cross(const vec3f &vec) const
+    __device__ __host__ inline const vec3f cross(const vec3f &vec) const
     {
         return vec3f(y*vec.z - z * vec.y, z*vec.x - x * vec.z, x*vec.y - y * vec.x);
     }
 
-    inline double dot(const vec3f &vec) const {
+    __device__ __host__ inline float dot(const vec3f &vec) const {
         return x * vec.x + y * vec.y + z * vec.z;
     }
 
-    inline void normalize()
+    __device__ __host__ inline void normalize()
     {
-        double sum = x * x + y * y + z * z;
+        float sum = x * x + y * y + z * z;
         if (sum > GLH_EPSILON_2) {
-            double base = double(1.0 / sqrt(sum));
+            float base = float(1.0 / sqrt(sum));
             x *= base;
             y *= base;
             z *= base;
         }
     }
 
-    inline double length() const {
-        return double(sqrt(x*x + y * y + z * z));
+    __device__ __host__ inline float length() const {
+        return float(sqrt(x*x + y * y + z * z));
     }
 
-    inline vec3f getUnit() const {
+    __device__ __host__ inline vec3f getUnit() const {
         return (*this) / length();
     }
 
-    inline bool isUnit() const {
+    __host__ __device__ inline bool isUnit() const {
         return isEqual(squareLength(), 1.f);
     }
 
     //! max(|x|,|y|,|z|)
-    inline double infinityNorm() const
+    __device__ __host__ inline float infinityNorm() const
     {
-        return fmax(fmax(fabs(x), fabs(y)), fabs(z));
+        return myfmax(myfmax(myfabs(x), myfabs(y)), myfabs(z));
     }
 
-    inline vec3f & set_value(const double &vx, const double &vy, const double &vz)
+    __device__ __host__ inline vec3f & set_value(const float &vx, const float &vy, const float &vz)
     {
         x = vx; y = vy; z = vz; return *this;
     }
 
-    inline bool equal_abs(const vec3f &other) {
+    __device__ __host__ inline bool equal_abs(const vec3f &other) {
         return x == other.x && y == other.y && z == other.z;
     }
 
-    inline double squareLength() const {
+    __device__ __host__ inline float squareLength() const {
         return x * x + y * y + z * z;
     }
 
-    static vec3f zero() {
+    __device__ __host__ static vec3f zero() {
         return vec3f(0.f, 0.f, 0.f);
     }
 
     //! Named constructor: retrieve vector for nth axis
-    static vec3f axis(int n) {
+    __device__ __host__ static vec3f axis(int n) {
         assert(n < 3);
         switch (n) {
             case 0: {
@@ -206,123 +219,123 @@ public:
     }
 
     //! Named constructor: retrieve vector for x axis
-    static vec3f xAxis() { return vec3f(1.f, 0.f, 0.f); }
+    __device__ __host__ static vec3f xAxis() { return vec3f(1.f, 0.f, 0.f); }
     //! Named constructor: retrieve vector for y axis
-    static vec3f yAxis() { return vec3f(0.f, 1.f, 0.f); }
+    __device__ __host__ static vec3f yAxis() { return vec3f(0.f, 1.f, 0.f); }
     //! Named constructor: retrieve vector for z axis
-    static vec3f zAxis() { return vec3f(0.f, 0.f, 1.f); }
+    __device__ __host__ static vec3f zAxis() { return vec3f(0.f, 0.f, 1.f); }
 
 };
 
-inline vec3f operator * (double t, const vec3f &v) {
+__device__ __host__ inline vec3f operator * (float t, const vec3f &v) {
     return vec3f(v.x*t, v.y*t, v.z*t);
 }
 
-inline vec3f interp(const vec3f &a, const vec3f &b, double t)
+__device__ __host__ inline vec3f interp(const vec3f &a, const vec3f &b, float t)
 {
     return a * (1 - t) + b * t;
 }
 
-inline vec3f vinterp(const vec3f &a, const vec3f &b, double t)
+__device__ __host__ inline vec3f vinterp(const vec3f &a, const vec3f &b, float t)
 {
     return a * t + b * (1 - t);
 }
 
-inline vec3f interp(const vec3f &a, const vec3f &b, const vec3f &c, double u, double v, double w)
+__device__ __host__ inline vec3f interp(const vec3f &a, const vec3f &b, const vec3f &c, float u, float v, float w)
 {
     return a * u + b * v + c * w;
 }
 
-inline double clamp(double f, double a, double b)
+__device__ __host__ inline float clamp(float f, float a, float b)
 {
-    return fmax(a, fmin(f, b));
+    return myfmax(a, myfmin(f, b));
 }
 
-inline double vdistance(const vec3f &a, const vec3f &b)
+__device__ __host__ inline float vdistance(const vec3f &a, const vec3f &b)
 {
     return (a - b).length();
 }
 
 
-inline std::ostream& operator<<(std::ostream&os, const vec3f &v) {
+__device__ __host__ inline std::ostream& operator<<(std::ostream&os, const vec3f &v) {
     os << "(" << v.x << ", " << v.y << ", " << v.z << ")" << std::endl;
     return os;
 }
 
-inline void
+__device__ __host__ inline void
 vmin(vec3f &a, const vec3f &b)
 {
     a.set_value(
-            fmin(a[0], b[0]),
-            fmin(a[1], b[1]),
-            fmin(a[2], b[2]));
+            myfmin(a[0], b[0]),
+            myfmin(a[1], b[1]),
+            myfmin(a[2], b[2]));
 }
 
-inline void
+__device__ __host__ inline void
 vmax(vec3f &a, const vec3f &b)
 {
     a.set_value(
-            fmax(a[0], b[0]),
-            fmax(a[1], b[1]),
-            fmax(a[2], b[2]));
+            myfmax(a[0], b[0]),
+            myfmax(a[1], b[1]),
+            myfmax(a[2], b[2]));
 }
 
-inline vec3f lerp(const vec3f &a, const vec3f &b, float t)
+__device__ __host__ inline vec3f lerp(const vec3f &a, const vec3f &b, float t)
 {
     return a + t * (b - a);
 }
 
 
-inline double fmax(double a, double b, double c)
+__device__ __host__ inline float fmax(float a, float b, float c)
 {
-    double t = a;
+    float t = a;
     if (b > t) t = b;
     if (c > t) t = c;
     return t;
 }
 
-inline double fmin(double a, double b, double c)
+__device__ __host__ inline float fmin(float a, float b, float c)
 {
-    double t = a;
+    float t = a;
     if (b < t) t = b;
     if (c < t) t = c;
     return t;
 }
 
-inline int project3(const vec3f &ax,
+__device__ __host__ inline int project3(const vec3f &ax,
                     const vec3f &p1, const vec3f &p2, const vec3f &p3)
 {
-    double P1 = ax.dot(p1);
-    double P2 = ax.dot(p2);
-    double P3 = ax.dot(p3);
+    float P1 = ax.dot(p1);
+    float P2 = ax.dot(p2);
+    float P3 = ax.dot(p3);
 
-    double mx1 = fmax(P1, P2, P3);
-    double mn1 = fmin(P1, P2, P3);
+    float mx1 = fmax(P1, P2, P3);
+    float mn1 = fmin(P1, P2, P3);
 
     if (mn1 > 0) return 0;
     if (0 > mx1) return 0;
     return 1;
 }
 
-inline int project6(vec3f &ax,
+__device__ __host__ inline int project6(vec3f &ax,
                     vec3f &p1, vec3f &p2, vec3f &p3,
                     vec3f &q1, vec3f &q2, vec3f &q3)
 {
-    double P1 = ax.dot(p1);
-    double P2 = ax.dot(p2);
-    double P3 = ax.dot(p3);
-    double Q1 = ax.dot(q1);
-    double Q2 = ax.dot(q2);
-    double Q3 = ax.dot(q3);
+    float P1 = ax.dot(p1);
+    float P2 = ax.dot(p2);
+    float P3 = ax.dot(p3);
+    float Q1 = ax.dot(q1);
+    float Q2 = ax.dot(q2);
+    float Q3 = ax.dot(q3);
 
-    double mx1 = fmax(P1, P2, P3);
-    double mn1 = fmin(P1, P2, P3);
-    double mx2 = fmax(Q1, Q2, Q3);
-    double mn2 = fmin(Q1, Q2, Q3);
+    float mx1 = fmax(P1, P2, P3);
+    float mn1 = fmin(P1, P2, P3);
+    float mx2 = fmax(Q1, Q2, Q3);
+    float mn2 = fmin(Q1, Q2, Q3);
 
     if (mn1 > mx2) return 0;
     if (mn2 > mx1) return 0;
     return 1;
 }
 
-bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3);
+__device__ __host__ bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3);

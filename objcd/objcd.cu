@@ -15,13 +15,14 @@
 
 
 #include "tri_contact.h"
-#include "objviewer.h"
+#include "myobj.h"
 #include "timer.h"
+
 #include <iostream>
 
 int main(int argc, char const *argv[]) {
-    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-no-cd\0108_00.obj)";
-//    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-2000-changed\0000_00.obj)";
+//    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-no-cd\0109_00.obj)";
+    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-2000-changed\0000_00.obj)";
     std::cout << "Loading object ..." << std::endl;
     Timer t;
     t.start();
@@ -34,13 +35,13 @@ int main(int argc, char const *argv[]) {
         << std::endl;
     t.reset();
     t.start();
-    auto pairs = obj.selfContactDetection();
+    auto pairs = obj.selfContactDetection(16, 32);
     t.stop();
     std::cout << pairs.size() << " contact(s) detected "
         << t.now() << " s" << std::endl;
-    for (auto &p : pairs) {
-        std::cout << "\tContact detected at: (" << p.first
-            << ", " << p.second << ")." << std::endl;
-    }
+//    for (auto &p : pairs) {
+//        std::cout << "\tContact detected at: (" << p.first
+//            << ", " << p.second << ")." << std::endl;
+//    }
     return 0;
 }

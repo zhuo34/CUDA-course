@@ -1,6 +1,6 @@
 ﻿#include "tri_contact.h"
 
-bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3) {
+__device__ __host__ bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3) {
     vec3f p1;
     vec3f p2 = P2 - P1;
     vec3f p3 = P3 - P1;
@@ -23,7 +23,7 @@ bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q
     vec3f g2 = e2.cross(n1);
     vec3f g3 = e3.cross(n1);
 
-    vec3f  h1 = f1.cross(m1);
+    vec3f h1 = f1.cross(m1);
     vec3f h2 = f2.cross(m1);
     vec3f h3 = f3.cross(m1);
 
@@ -39,7 +39,7 @@ bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q
 
     // now begin the series of tests
     if (!project3(n1, q1, q2, q3)) return false;
-    if (!project3(m1, -q1, p2 - q1, p3 - q1)) return false;
+    if (!project3(m1, -q1, p2-q1, p3-q1)) return false;
 
     if (!project6(ef11, p1, p2, p3, q1, q2, q3)) return false;
     if (!project6(ef12, p1, p2, p3, q1, q2, q3)) return false;
