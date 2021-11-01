@@ -19,8 +19,13 @@
 #include "timer.h"
 
 #include <iostream>
+#include <set>
 
 int main(int argc, char const *argv[]) {
+//    std::set<std::pair<int, int>> pairs;
+//    for (auto &p : pairs) {
+//        std::cout << p.first << " " << p.second << std::endl;
+//    }
 //    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-no-cd\0109_00.obj)";
     std::string path = R"(D:\Projects\CUDA-course\objcd\flag-2000-changed\0000_00.obj)";
     std::cout << "Loading object ..." << std::endl;
@@ -35,7 +40,7 @@ int main(int argc, char const *argv[]) {
         << std::endl;
     t.reset();
     t.start();
-    auto pairs = obj.selfContactDetection(16, 32);
+    auto pairs = obj.selfContactDetection();
     t.stop();
     std::cout << pairs.size() << " contact(s) detected "
         << t.now() << " s" << std::endl;

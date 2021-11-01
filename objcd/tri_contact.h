@@ -225,6 +225,16 @@ public:
     //! Named constructor: retrieve vector for z axis
     __device__ __host__ static vec3f zAxis() { return vec3f(0.f, 0.f, 1.f); }
 
+    __host__ __device__ void setMin(const vec3f &v) {
+        x = myfmin(x, v.x);
+        y = myfmin(y, v.y);
+        z = myfmin(z, v.z);
+    }
+    __host__ __device__ void setMax(const vec3f &v) {
+        x = myfmax(x, v.x);
+        y = myfmax(y, v.y);
+        z = myfmax(z, v.z);
+    }
 };
 
 __device__ __host__ inline vec3f operator * (float t, const vec3f &v) {
@@ -258,7 +268,7 @@ __device__ __host__ inline float vdistance(const vec3f &a, const vec3f &b)
 
 
 __device__ __host__ inline std::ostream& operator<<(std::ostream&os, const vec3f &v) {
-    os << "(" << v.x << ", " << v.y << ", " << v.z << ")" << std::endl;
+    os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
     return os;
 }
 
@@ -286,7 +296,7 @@ __device__ __host__ inline vec3f lerp(const vec3f &a, const vec3f &b, float t)
 }
 
 
-__device__ __host__ inline float fmax(float a, float b, float c)
+__device__ __host__ inline float myfmax(float a, float b, float c)
 {
     float t = a;
     if (b > t) t = b;
@@ -294,7 +304,7 @@ __device__ __host__ inline float fmax(float a, float b, float c)
     return t;
 }
 
-__device__ __host__ inline float fmin(float a, float b, float c)
+__device__ __host__ inline float myfmin(float a, float b, float c)
 {
     float t = a;
     if (b < t) t = b;
@@ -309,8 +319,8 @@ __device__ __host__ inline int project3(const vec3f &ax,
     float P2 = ax.dot(p2);
     float P3 = ax.dot(p3);
 
-    float mx1 = fmax(P1, P2, P3);
-    float mn1 = fmin(P1, P2, P3);
+    float mx1 = myfmax(P1, P2, P3);
+    float mn1 = myfmin(P1, P2, P3);
 
     if (mn1 > 0) return 0;
     if (0 > mx1) return 0;
@@ -328,14 +338,14 @@ __device__ __host__ inline int project6(vec3f &ax,
     float Q2 = ax.dot(q2);
     float Q3 = ax.dot(q3);
 
-    float mx1 = fmax(P1, P2, P3);
-    float mn1 = fmin(P1, P2, P3);
-    float mx2 = fmax(Q1, Q2, Q3);
-    float mn2 = fmin(Q1, Q2, Q3);
+    float mx1 = myfmax(P1, P2, P3);
+    float mn1 = myfmin(P1, P2, P3);
+    float mx2 = myfmax(Q1, Q2, Q3);
+    float mn2 = myfmin(Q1, Q2, Q3);
 
     if (mn1 > mx2) return 0;
     if (mn2 > mx1) return 0;
     return 1;
 }
 
-__device__ __host__ bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3);
+__device__ __host__ bool tri_contact(const vec3f &P1, const vec3f &P2, const vec3f &P3, const vec3f &Q1, const vec3f &Q2, const vec3f &Q3);

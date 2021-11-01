@@ -1,6 +1,6 @@
 ﻿#include "tri_contact.h"
 
-__device__ __host__ bool tri_contact(vec3f &P1, vec3f &P2, vec3f &P3, vec3f &Q1, vec3f &Q2, vec3f &Q3) {
+__device__ __host__ bool tri_contact(const vec3f &P1, const vec3f &P2, const vec3f &P3, const vec3f &Q1, const vec3f &Q2, const vec3f &Q3) {
     vec3f p1;
     vec3f p2 = P2 - P1;
     vec3f p3 = P3 - P1;

@@ -1,9 +1,11 @@
 #include "myobj.h"
 #include "book.h"
 #include "cuda.h"
+#include "timer.h"
 
 #include <fstream>
 #include <iostream>
+#include <algorithm>
 
 MyObj MyObj::load(const std::string &path) {
     MyObj obj;
@@ -42,26 +44,38 @@ int MyObj::nVertex() {
     return (int)vs.size();
 }
 
-bool MyObj::triContactDetection(int i, int j) {
+bool MyObj::triContactDetection(int i, int j) const {
+    if (fs[i].hasSharedWith(fs[j]))
+        return false;
     return tri_contact(vs[fs[i][0]-1], vs[fs[i][1]-1], vs[fs[i][2]-1],
                        vs[fs[j][0]-1], vs[fs[j][1]-1], vs[fs[j][2]-1]);
 }
 
-std::vector<std::pair<int, int>> MyObj::selfContactDetection() {
-    std::vector<std::pair<int, int>> pairs;
+void MyObj::constructBVH() {
+    nodes = new BVHNode*[nFace()];
     for (int i = 0; i < nFace(); i++) {
-        for (int j = i+1; j < nFace(); j++) {
-            if (fs[i].hasSharedWith(fs[j]))
-                continue;
-            if (triContactDetection(i, j)) {
-                pairs.emplace_back(i, j);
-            }
-        }
+        nodes[i] = new BVHNode;
+        nodes[i]->setTriangle(i, vs[fs[i][0]-1], vs[fs[i][1]-1], vs[fs[i][2]-1]);
     }
+    bvh = BVHNode::build(nodes, nFace());
+    qsort(nodes, nFace(), sizeof(BVHNode*), BVHNode::box_idx_cmp);
+}
+
+std::set<std::pair<int, int>> MyObj::selfContactDetection() {
+    std::set<std::pair<int, int>> pairs;
+    constructBVH();
+    Timer t;
+    t.start();
+    int cnt = 0;
+    for (int i = 0; i < nFace(); i++) {
+        cnt += nodes[i]->contact(bvh, this, pairs);
+    }
+    t.stop();
+    std::cout << t.now() << " " << cnt << " " << (nFace() * (nFace() - 1)) / 2 << std::endl;
     return pairs;
 }
 
-std::vector<std::pair<int, int>> MyObj::selfContactDetection(int blockSize, int streamNum) {
+std::set<std::pair<int, int>> MyObj::selfContactDetection(int blockSize, int streamNum) {
     if (blockSize == 0)
         return selfContactDetection();
     int faceNumPerStream = nFace()/streamNum;
@@ -86,7 +100,7 @@ std::vector<std::pair<int, int>> MyObj::selfContactDetection(int blockSize, int 
     dim3 bSize(blockSize, blockSize);
     float totElapsedTime = 0;
 
-    std::vector<std::pair<int, int>> pairs;
+    std::set<std::pair<int, int>> pairs;
     cudaEvent_t start, stop;
     for (int i = 0; i < streamNum; i++) {
         int x_faceBegin = i * faceNumPerStream;
@@ -121,7 +135,7 @@ std::vector<std::pair<int, int>> MyObj::selfContactDetection(int blockSize, int 
                 if (h_res[k]) {
                     int y = k / gridSize;
                     int x = k % gridSize;
-                    pairs.emplace_back(x + x_faceBegin, y + y_faceBegin);
+                    pairs.emplace(x + x_faceBegin, y + y_faceBegin);
                 }
             }
         }
@@ -135,7 +149,7 @@ std::vector<std::pair<int, int>> MyObj::selfContactDetection(int blockSize, int 
     return pairs;
 }
 
-__host__ __device__ bool Triangle::hasSharedWith(const Triangle &t) {
+__host__ __device__ bool Triangle::hasSharedWith(const Triangle &t) const {
     for (auto &v : v_id) {
         for (auto &v2 : t.v_id) {
             if (v == v2) {
