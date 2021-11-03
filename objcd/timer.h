@@ -24,6 +24,7 @@ public:
     void start();
     void reset();
     double stop();
+    double end();
     double now() const;
     double lap();
     double lap_now() const;

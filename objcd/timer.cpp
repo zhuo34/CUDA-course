@@ -21,6 +21,12 @@ double Timer::stop() {
     return now();
 }
 
+double Timer::end() {
+    auto t = stop();
+    reset();
+    return t;
+}
+
 void Timer::reset() {
     if (!is_started || is_running)
         return;

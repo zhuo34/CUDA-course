@@ -3,10 +3,9 @@ add_executable(objcd
         tri_contact.cu tri_contact.h
         myobj.cu myobj.h
         timer.cpp timer.h
-        bvh.cu bvh.h)
+        bvh.cu bvh.h myvector.cu myvector.h)
 target_compile_features(objcd PUBLIC cuda_std_17)
 target_link_libraries(objcd PUBLIC book)
-
 set_target_properties(objcd PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON)
 

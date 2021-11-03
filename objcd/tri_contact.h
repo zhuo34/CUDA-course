@@ -1,7 +1,6 @@
 #pragma once
 
-#include "cuda.h"
-
+#include <cuda.h>
 #include <ostream>
 
 #define     GLH_ZERO                float(0.0)

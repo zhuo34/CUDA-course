@@ -17,17 +17,15 @@
 #include "tri_contact.h"
 #include "myobj.h"
 #include "timer.h"
+#include "myvector.h"
 
 #include <iostream>
 #include <set>
 
 int main(int argc, char const *argv[]) {
-//    std::set<std::pair<int, int>> pairs;
-//    for (auto &p : pairs) {
-//        std::cout << p.first << " " << p.second << std::endl;
-//    }
-//    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-no-cd\0109_00.obj)";
+//    std::string path = R"(D:\Projects\CUDA-course\objcd\flag-no-cd\0108_00.obj)";
     std::string path = R"(D:\Projects\CUDA-course\objcd\flag-2000-changed\0000_00.obj)";
+
     std::cout << "Loading object ..." << std::endl;
     Timer t;
     t.start();
@@ -40,13 +38,9 @@ int main(int argc, char const *argv[]) {
         << std::endl;
     t.reset();
     t.start();
-    auto pairs = obj.selfContactDetection();
+    int cnt = obj.selfContactDetectionCUDA(128);
     t.stop();
-    std::cout << pairs.size() << " contact(s) detected "
+    std::cout << cnt << " contact(s) detected "
         << t.now() << " s" << std::endl;
-//    for (auto &p : pairs) {
-//        std::cout << "\tContact detected at: (" << p.first
-//            << ", " << p.second << ")." << std::endl;
-//    }
     return 0;
 }

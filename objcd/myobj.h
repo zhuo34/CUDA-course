@@ -2,8 +2,9 @@
 
 #include "tri_contact.h"
 #include "bvh.h"
-#include "cuda.h"
+#include "myvector.h"
 
+#include <cuda.h>
 #include <vector>
 #include <utility>
 #include <set>
@@ -31,18 +32,29 @@ private:
     std::vector<Triangle> fs;
     std::vector<vec3f> vs;
     std::vector<vec3f> vns;
-    BVHNode **nodes = nullptr;
+    BVHNode **leaves = nullptr;
     BVHNode *bvh = nullptr;
+    int *leaf_idx = nullptr;
+    BVHDenseNode *h_bvh = nullptr;
+    int *d_leaves = nullptr;
+    BVHDenseNode *d_bvh = nullptr;
+    vec3f *d_vs = nullptr;
+    Triangle *d_fs = nullptr;
 
     void constructBVH();
+    unsigned long long allocObjMem();
+    void freeObjMem();
 
 public:
+    ~MyObj();
     static MyObj load(const std::string &path);
     bool triContactDetection(int i, int j) const;
+    __host__ __device__
+    static bool triContactDetectionCUDA(vec3f *d_vs, Triangle *d_fs, int i, int j);
     std::set<std::pair<int, int>> selfContactDetection();
-    std::set<std::pair<int, int>> selfContactDetection(int blockSize, int streamNum);
+    int selfContactDetectionCUDA(int blockSize=128);
     int nFace();
     int nVertex();
 };
 
-__global__ void cdOnCUDA(vec3f *vs, Triangle *fs, bool *res, int x_faceBegin, int x_faceNum, int y_faceBegin, int y_faceNum, bool isSelf);
+__global__ void cdOnCUDA(vec3f *d_vs, Triangle *d_fs, int *d_leaves, BVHDenseNode *d_bvh, MyVector *d_vec, int *a, int nFace, int height);
