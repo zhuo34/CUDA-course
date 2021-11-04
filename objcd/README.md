@@ -10,12 +10,12 @@
   - [baseline](#baseline)
 - [Methods](#Methods)
   - [BVH 算法](#BVH 算法)
-  - [GPU version of BVH](#GPU version of BVH)
+  - [GPU version of BVH](# GPU version of BVH)
 - [Results](#Results)
 - [Discussion](#Discussion)
   - [算法实现中遇到的问题](#算法实现中遇到的问题)
-  - [改进空间](改进空间)
-  - [其它问题](其它问题)
+  - [改进空间](#改进空间)
+  - [其它问题](#其它问题)
 
 ## Introduction
 
@@ -81,7 +81,7 @@ BVH 的另一关键词是**层次结构**。算法需要根据各个包围盒的
 2. 若相交，则判断与其子结点是否相交；否则结束；
 3. 若与叶结点包围盒相交，进行精细的相交检测。
 
-二叉树的高度是 $`O(\log N)`$，因此理想条件下，自碰撞检测的算法复杂度可从 $`O(N^2)`$ 降为 $`O(N\log N)`$，大大优化了时间复杂度。
+二叉树的高度是 $O(\log N)$，因此理想条件下，自碰撞检测的算法复杂度可从 $O(N^2)$ 降为 $O(N\log N)$，大大优化了时间复杂度。
 
 事实上，BVH 带来的性能提升来自于快速的包围盒之间的检测，以及从 BVH 树中剪支，排除了大量无需检测的三角形。
 
@@ -283,8 +283,6 @@ int BVHDenseNode::contact_stack(BVHDenseNode *bvh, int height, vec3f *d_vs, Tria
 #### 碰撞检测的实际应用
 
 碰撞检测算法在实际应用中放在什么位置，它如何与整个 CG 流程配合？
-
----
 
 [obj]:flag-2000-changed/0000_00.obj
 [obj-img]: img/flag-obj.png
