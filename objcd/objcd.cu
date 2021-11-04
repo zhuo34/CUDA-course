@@ -38,7 +38,7 @@ int main(int argc, char const *argv[]) {
         << std::endl;
     t.reset();
     t.start();
-    int cnt = obj.selfContactDetectionCUDA(128);
+    int cnt = obj.selfContactDetectionCUDA(32);
     t.stop();
     std::cout << cnt << " contact(s) detected "
         << t.now() << " s" << std::endl;

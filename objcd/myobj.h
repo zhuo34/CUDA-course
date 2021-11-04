@@ -40,6 +40,7 @@ private:
     BVHDenseNode *d_bvh = nullptr;
     vec3f *d_vs = nullptr;
     Triangle *d_fs = nullptr;
+    std::set<std::pair<int, int>> pairs;
 
     void constructBVH();
     unsigned long long allocObjMem();
@@ -51,7 +52,7 @@ public:
     bool triContactDetection(int i, int j) const;
     __host__ __device__
     static bool triContactDetectionCUDA(vec3f *d_vs, Triangle *d_fs, int i, int j);
-    std::set<std::pair<int, int>> selfContactDetection();
+    int selfContactDetection();
     int selfContactDetectionCUDA(int blockSize=128);
     int nFace();
     int nVertex();

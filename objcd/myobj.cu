@@ -61,18 +61,22 @@ void MyObj::constructBVH() {
     bvh = BVHNode::build(leaves, nFace());
 }
 
-std::set<std::pair<int, int>> MyObj::selfContactDetection() {
-    std::set<std::pair<int, int>> pairs;
-    constructBVH();
-    int cnt = 0;
+int MyObj::selfContactDetection() {
+    pairs.clear();
     Timer t;
+    t.start();
+    std::cout << "Constructing BVH";
+    constructBVH();
+    double elapse = t.end();
+    printf(", used %.3f s\n", elapse);
+    int cnt = 0;
     t.start();
     for (int i = 0; i < nFace(); i++) {
         cnt += leaves[i]->contact(bvh, this, pairs);
     }
-    t.stop();
-    std::cout << t.now() << " " << cnt << " " << (nFace() * (nFace() - 1)) / 2 << std::endl;
-    return pairs;
+    elapse = t.end();
+    std::cout << elapse << " " << cnt << " " << (nFace() * (nFace() - 1)) / 2 << std::endl;
+    return cnt / 2;
 }
 
 unsigned long long MyObj::allocObjMem() {

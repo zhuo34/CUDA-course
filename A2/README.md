@@ -1,3 +1,1 @@
-# A1 - Julia Set
-
-![Julia set example](images/juliaset.png)
+# A2 - Simple Ray Tracing
